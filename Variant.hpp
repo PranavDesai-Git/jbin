@@ -1,5 +1,6 @@
 #ifndef VARIANT_HPP
 #define VARIANT_HPP
+
 #include <cstddef>
 #include <cstdint>
 #include <vector>

@@ -24,7 +24,7 @@ FetchContent_MakeAvailable(zstd)
 
 
 # Create our main executable
-add_executable(jbin main.cpp)
+add_executable(jbin main.cpp Variant.cpp)
 
 target_link_libraries(jbin PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(jbin PRIVATE libzstd_static)
