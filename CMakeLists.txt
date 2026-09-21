@@ -23,8 +23,14 @@ FetchContent_MakeAvailable(json)
 FetchContent_MakeAvailable(zstd)
 
 
-# Create our main executable
-add_executable(jbin main.cpp Variant.cpp)
+# 1. Automatically find all .cpp files in the src/ directory
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+
+# 2. Create the executable using those automatically found files
+add_executable(jbin ${SOURCES})
+
+# 3. Tell CMake that header files (.hpp) live in the include/ folder
+target_include_directories(jbin PRIVATE include)
 
 target_link_libraries(jbin PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(jbin PRIVATE libzstd_static)
