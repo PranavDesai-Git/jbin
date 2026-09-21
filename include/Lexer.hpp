@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <vector>
 
@@ -10,6 +11,7 @@ enum class TokenType {
     Keyword_End,
     Identifier,
     Number,
+    StringLiteral,
     Equals,
     Colon,
     Comma,

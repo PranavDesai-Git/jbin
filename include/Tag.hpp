@@ -1,5 +1,4 @@
-#ifndef TAG_HPP
-#define TAG_HPP
+#pragma once
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -21,4 +20,3 @@ void encodeString(std::vector<uint8_t> &buffer, uint32_t fieldNumber,
                   const std::string &text);
 
 std::string decodeString(const std::vector<uint8_t> &buffer, size_t &offset);
-#endif
