@@ -1,6 +1,7 @@
 #ifndef TAG_HPP
 #define TAG_HPP
 #include <cstdint>
+#include <string>
 #include <vector>
 
 enum class wiretype : uint8_t {
@@ -16,4 +17,8 @@ void encodeTag(std::vector<uint8_t> &buffer, uint32_t fieldnumber,
 void decodeTag(const std::vector<uint8_t> &buffer, size_t &offset,
                uint32_t &outFieldNumber, wiretype &outType);
 
+void encodeString(std::vector<uint8_t> &buffer, uint32_t fieldNumber,
+                  const std::string &text);
+
+std::string decodeString(const std::vector<uint8_t> &buffer, size_t &offset);
 #endif
