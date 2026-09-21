@@ -14,3 +14,10 @@ void encodetag(std::vector<uint8_t> &buffer, uint32_t fieldnumber,
     val |= static_cast<uint64_t>(wiretype);
     encodeVariant(buffer, val);
 }
+
+void decodeTag(const std::vector<uint8_t> &buffer, size_t &offset,
+               uint32_t &outFieldNumber, wiretype &outType) {
+    uint64_t val = decodeVariant(buffer, offset);
+    outType = static_cast<wiretype>(val & 3);
+    outFieldNumber = val >> 2;
+}
