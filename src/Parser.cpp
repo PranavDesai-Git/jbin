@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "Lexer.hpp"
 #include "Schema.hpp"
 #include <stdexcept>
 #include <string>
@@ -24,4 +25,76 @@ DataType Parser::parseDataType() {
     }
 
     return result;
+}
+
+Field Parser::parseField() {
+    Field f;
+    if (!isAtEnd() && peek().type == TokenType::Keyword_Optional) {
+        f.isOptional = true;
+        consume();
+    }
+    if (!isAtEnd() && peek().type == TokenType::Number) {
+        int numToken = std::stoi(consume().value);
+        f.number = numToken;
+    } else {
+        throw std::runtime_error(
+            "Expected Tag Number at the start of the Field");
+    }
+    if (!isAtEnd() && peek().type == TokenType::Dot) {
+        consume();
+    } else {
+        throw std::runtime_error("Expected '.' after Number");
+    }
+    if (!isAtEnd() && peek().type == TokenType::Identifier) {
+        std::string nameToken = consume().value;
+        f.name = nameToken;
+    } else {
+        throw std::runtime_error("Expected an identifier");
+    }
+    if (!isAtEnd() && peek().type == TokenType::Colon) {
+        consume();
+    } else {
+        throw std::runtime_error("Expected ' : ' after an identifier");
+    }
+    TokenType t = peek().type;
+    if (!isAtEnd() &&
+        (t == TokenType::Identifier || t == TokenType::Keyword_Map ||
+         t == TokenType::Keyword_Union)) {
+        DataType typeToken = parseDataType();
+        f.type = typeToken;
+    } else {
+        throw std::runtime_error("Expected a datatype after identifier");
+    }
+    if (!isAtEnd() && peek().type == TokenType::Equals) {
+        consume();
+        TokenType t = peek().type;
+        if (!isAtEnd() &&
+            (t == TokenType::Identifier || t == TokenType::Number ||
+             t == TokenType::StringLiteral)) {
+            f.defaultValue = consume().value;
+        } else {
+            throw std::runtime_error("Expected a value after =");
+        }
+    }
+    return f;
+}
+
+MessageDef Parser::parseMessage() {
+    MessageDef m;
+    // TODO:
+    return m;
+}
+
+EnumDef Parser::parseEnum() {
+    EnumDef e;
+    // TODO:
+    return e;
+}
+
+Schema Parser::parse() {
+    Schema s;
+    // TODO: The main loop!
+    // While !isAtEnd(), check if peek() is Keyword_Message or Keyword_Enum and
+    // call the right function!
+    return s;
 }
