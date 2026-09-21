@@ -104,14 +104,54 @@ MessageDef Parser::parseMessage() {
 
 EnumDef Parser::parseEnum() {
     EnumDef e;
-    // TODO:
+    if (!isAtEnd() && peek().type == TokenType::Keyword_Enum) {
+        consume();
+    }
+    if (!isAtEnd() && peek().type == TokenType::Identifier) {
+        std::string nameToken = consume().value;
+        e.name = nameToken;
+    } else {
+        throw std::runtime_error("Expected identifier after enum");
+    }
+    if (!isAtEnd() && peek().type == TokenType::Colon) {
+        consume();
+    } else {
+        throw std::runtime_error("Expected ':' after identifier");
+    }
+    while (!isAtEnd() && peek().type != TokenType::Keyword_End) {
+        EnumEntry ee;
+        if (!isAtEnd() && peek().type == TokenType::Number) {
+            ee.number = std::stoi(consume().value);
+        } else {
+            throw std::runtime_error("Expected a number for enum entry");
+        }
+        if (!isAtEnd() && peek().type == TokenType::Dot) {
+            consume();
+        } else {
+            throw std::runtime_error("Expected '.' after Number");
+        }
+        if (!isAtEnd() && peek().type == TokenType::Identifier) {
+            std::string nameToken = consume().value;
+            ee.name = nameToken;
+        } else {
+            throw std::runtime_error("Expected identifier");
+        }
+        e.entries.push_back(ee);
+    }
+    consume();
     return e;
 }
 
 Schema Parser::parse() {
     Schema s;
-    // TODO: The main loop!
-    // While !isAtEnd(), check if peek() is Keyword_Message or Keyword_Enum and
-    // call the right function!
+    while (!isAtEnd()) {
+        if (peek().type == TokenType::Keyword_Message)
+            s.messages.push_back(parseMessage());
+        else if (peek().type == TokenType::Keyword_Enum)
+            s.enums.push_back(parseEnum());
+        else {
+            throw std::runtime_error("Expected enum or message");
+        }
+    }
     return s;
 }
