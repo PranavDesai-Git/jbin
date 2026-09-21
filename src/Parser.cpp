@@ -81,7 +81,24 @@ Field Parser::parseField() {
 
 MessageDef Parser::parseMessage() {
     MessageDef m;
-    // TODO:
+    if (!isAtEnd() && peek().type == TokenType::Keyword_Message) {
+        consume();
+    }
+    if (!isAtEnd() && peek().type == TokenType::Identifier) {
+        std::string nameToken = consume().value;
+        m.name = nameToken;
+    } else {
+        throw std::runtime_error("Expected identifier after message");
+    }
+    if (!isAtEnd() && peek().type == TokenType::Colon) {
+        consume();
+    } else {
+        throw std::runtime_error("Expected ':' after identifier");
+    }
+    while (!isAtEnd() && peek().type != TokenType::Keyword_End) {
+        m.fields.push_back(parseField());
+    }
+    consume();
     return m;
 }
 
