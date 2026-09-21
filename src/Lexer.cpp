@@ -3,6 +3,25 @@
 #include <string>
 #include <vector>
 
+/*
+enum Activity:
+    1. active
+    2. inactive
+end
+
+message Player:
+      1. name: string
+      2. health: i32
+      3. weapons: list(string)
+      // comments
+      \/\*
+      multiline comments
+      \*\/
+      4. connections: list(player)
+      5. activeStatus: Activity
+end
+ * */
+
 std::vector<Token> tokenize(const std::string &source) {
     std::vector<Token> result;
     int curr = 0;
@@ -34,13 +53,18 @@ std::vector<Token> tokenize(const std::string &source) {
             curr++;
             continue;
         }
-        if (c == '[') {
-            result.push_back({"[", TokenType::LParen});
+        if (c == ',') {
+            result.push_back({",", TokenType::Comma});
             curr++;
             continue;
         }
-        if (c == ']') {
-            result.push_back({"]", TokenType::RParen});
+        if (c == '(') {
+            result.push_back({"(", TokenType::LParen});
+            curr++;
+            continue;
+        }
+        if (c == ')') {
+            result.push_back({")", TokenType::RParen});
             curr++;
             continue;
         }
@@ -71,6 +95,12 @@ std::vector<Token> tokenize(const std::string &source) {
                 result.push_back({word, TokenType::Keyword_Message});
             } else if (word == "enum") {
                 result.push_back({word, TokenType::Keyword_Enum});
+            } else if (word == "optional") {
+                result.push_back({word, TokenType::Keyword_Optional});
+            } else if (word == "map") {
+                result.push_back({word, TokenType::Keyword_Map});
+            } else if (word == "union") {
+                result.push_back({word, TokenType::Keyword_Union});
             } else if (word == "end") {
                 result.push_back({word, TokenType::Keyword_End});
             } else {

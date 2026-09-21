@@ -4,12 +4,16 @@
 enum class TokenType {
     Keyword_Message,
     Keyword_Enum,
+    Keyword_Optional,
+    Keyword_Map,
+    Keyword_Union,
     Keyword_End,
     Identifier,
     Number,
-    Colon,
-    Dot,
     Equals,
+    Colon,
+    Comma,
+    Dot,
     LParen,
     RParen,
     EndOfFile
