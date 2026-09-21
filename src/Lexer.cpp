@@ -9,18 +9,18 @@ enum Activity:
     2. inactive
 end
 
+// comments
+
 message Player:
       1. name: string
-      2. health: i32
+      2. health: i32 = 100 // default value
       3. weapons: list(string)
-      // comments
-      \/\*
-      multiline comments
-      \*\/
-      4. connections: list(player)
+      4. connections: list(Player)
       5. activeStatus: Activity
+      6. inventory: map(string, i32)
+      7. balance: union(string="empty", i32)
 end
- * */
+*/
 
 std::vector<Token> tokenize(const std::string &source) {
     std::vector<Token> result;
@@ -81,6 +81,17 @@ std::vector<Token> tokenize(const std::string &source) {
                 curr++;
             }
             curr += 2;
+            continue;
+        }
+        if (c == '"') {
+            std::string text = "";
+            curr++;
+            while (curr < source.length() && source[curr] != '"') {
+                text += source[curr];
+                curr++;
+                curr++;
+            }
+            result.push_back({text, TokenType::StringLiteral});
             continue;
         }
 
