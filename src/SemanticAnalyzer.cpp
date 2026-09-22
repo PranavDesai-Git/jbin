@@ -45,6 +45,16 @@ void SemanticAnalyzer::validateMessages(const Schema &schema) {
                 !symbolTable.contains(f.type.name)) {
                 throw std::runtime_error("Unknown type: " + f.type.name + " at line " + std::to_string(f.line));
             }
+
+            if (f.type.name == "map") {
+                if (f.type.subTypes.empty()) {
+                    throw std::runtime_error("Map requires sub-types (e.g. map(string, i32)) at line " + std::to_string(f.line));
+                }
+                std::string keyType = f.type.subTypes[0].name;
+                if (keyType != "string" && keyType != "i32") {
+                    throw std::runtime_error("Map keys must be a scalar type (like 'string' or 'i32') at line " + std::to_string(f.line));
+                }
+            }
         }
     }
 }
