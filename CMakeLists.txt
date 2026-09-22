@@ -19,8 +19,14 @@ FetchContent_Declare(
     SOURCE_SUBDIR build/cmake
 )
 
+FetchContent_Declare(
+    cxxopts
+    URL https://github.com/jarro2783/cxxopts/archive/refs/tags/v3.1.1.tar.gz
+)
+
 FetchContent_MakeAvailable(json)
 FetchContent_MakeAvailable(zstd)
+FetchContent_MakeAvailable(cxxopts)
 
 
 # 1. Automatically find all .cpp files in the src/ directory
@@ -34,3 +40,4 @@ target_include_directories(jbin PRIVATE include)
 
 target_link_libraries(jbin PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(jbin PRIVATE libzstd_static)
+target_link_libraries(jbin PRIVATE cxxopts::cxxopts)
