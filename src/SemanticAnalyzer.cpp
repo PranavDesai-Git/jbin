@@ -41,8 +41,10 @@ void SemanticAnalyzer::buildSymbolTable(const Schema &schema) {
 }
 
 bool SemanticAnalyzer::isBuiltInType(const std::string &typeName) {
-    return typeName == "i32" || typeName == "string" || typeName == "list" ||
-           typeName == "map" || typeName == "union";
+    return typeName == "i32" || typeName == "i64" || typeName == "f32" ||
+           typeName == "f64" || typeName == "bool" || typeName == "bytes" ||
+           typeName == "string" || typeName == "list" || typeName == "map" ||
+           typeName == "union";
 }
 
 void SemanticAnalyzer::validateMessages(const Schema &schema) {
@@ -50,6 +52,11 @@ void SemanticAnalyzer::validateMessages(const Schema &schema) {
         std::unordered_set<uint32_t> seenTags;
 
         for (const Field &f : m.fields) {
+            // Tag number sanity check for 29-bit limit
+            if (f.number > 536870911) {
+                throw std::runtime_error("Tag number exceeds maximum allowed (536870911) at line " + std::to_string(f.line));
+            }
+
             if (seenTags.contains(f.number)) {
                 throw std::runtime_error("Duplicate Tag number in message at line " + std::to_string(f.line));
             } else {
@@ -66,8 +73,8 @@ void SemanticAnalyzer::validateMessages(const Schema &schema) {
                     throw std::runtime_error("Map requires sub-types (e.g. map(string, i32)) at line " + std::to_string(f.line));
                 }
                 std::string keyType = f.type.subTypes[0].name;
-                if (keyType != "string" && keyType != "i32") {
-                    throw std::runtime_error("Map keys must be a scalar type (like 'string' or 'i32') at line " + std::to_string(f.line));
+                if (keyType != "string" && keyType != "i32" && keyType != "i64") {
+                    throw std::runtime_error("Map keys must be a scalar type (like 'string', 'i32', or 'i64') at line " + std::to_string(f.line));
                 }
             }
 
@@ -78,6 +85,29 @@ void SemanticAnalyzer::validateMessages(const Schema &schema) {
                         std::stoi(f.defaultValue);
                     } catch (...) {
                         throw std::runtime_error("Invalid default value for integer type at line " + std::to_string(f.line));
+                    }
+                } else if (f.type.name == "bool") {
+                    if (f.defaultValue != "true" && f.defaultValue != "false") {
+                        throw std::runtime_error("Invalid default value for bool type at line " + std::to_string(f.line));
+                    }
+                } else if (!isBuiltInType(f.type.name) && symbolTable.contains(f.type.name)) {
+                    // Check if it's an enum, and if so, validate the default value is a valid entry
+                    bool isEnum = false;
+                    bool isValidEntry = false;
+                    for (const auto& e : schema.enums) {
+                        if (e.name == f.type.name) {
+                            isEnum = true;
+                            for (const auto& entry : e.entries) {
+                                if (entry.name == f.defaultValue) {
+                                    isValidEntry = true;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    if (isEnum && !isValidEntry) {
+                        throw std::runtime_error("Invalid default value '" + f.defaultValue + "' for enum '" + f.type.name + "' at line " + std::to_string(f.line));
                     }
                 }
             }
