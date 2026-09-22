@@ -1,7 +1,4 @@
 ### TODO
-- [ ] CLI Interface (`jbin build schema.jbin --out c`)
-- [ ] Dynamic JSON Binary Packer (serialize JSON to .jbin dynamically)
-- [ ] Dynamic JSON Binary Reader (deserialize .jbin to JSON)
 - [ ] Codegen abstraction (Visitor pattern for multi-lang)
 - [ ] C struct codegen
 - [ ] C++ struct codegen
@@ -10,7 +7,10 @@
 - [ ] Runtime FFI bindings / getters
 
 ### DOING
+- [ ] CLI Interface (`jbin build schema.jbin --out c`)
 ### DONE
+- [x] Dynamic JSON Binary Packer (serialize JSON to .jbin dynamically)
+- [x] Dynamic JSON Binary Reader (deserialize .jbin to JSON)
 - [x] Lexer (with string literals, map, union, optional)
 - [x] Parser (Recursive Descent AST builder)
 - [x] Encode/Decode String
