@@ -1,5 +1,4 @@
 ### TODO
-- [ ] Codegen abstraction (Visitor pattern for multi-lang)
 - [ ] C struct codegen
 - [ ] C++ struct codegen
 - [ ] Python codegen
@@ -7,9 +6,10 @@
 - [ ] Runtime FFI bindings / getters
 
 ### DOING
-- [ ] CLI Interface (`jbin build schema.jbin --out c`)
+- [ ] Codegen abstraction (Visitor pattern for multi-lang)
 ### DONE
 - [x] Dynamic JSON Binary Packer (serialize JSON to .jbin dynamically)
+- [x] CLI Interface (`jbin build schema.jbin --out c`)
 - [x] Dynamic JSON Binary Reader (deserialize .jbin to JSON)
 - [x] Lexer (with string literals, map, union, optional)
 - [x] Parser (Recursive Descent AST builder)
