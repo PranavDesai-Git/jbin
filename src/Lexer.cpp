@@ -25,8 +25,20 @@ end
 std::vector<Token> tokenize(const std::string &source) {
     std::vector<Token> result;
     int curr = 0;
+    int currentLine = 1;
     while (curr < source.length()) {
         char c = source[curr];
+
+        if (c == '\n') {
+            currentLine++;
+            curr++;
+            continue;
+        }
+        
+        if (std::isspace(c)) {
+            curr++;
+            continue;
+        }
 
         if (std::isdigit(c)) {
             std::string num = "";
@@ -34,37 +46,37 @@ std::vector<Token> tokenize(const std::string &source) {
                 num += source[curr];
                 curr++;
             }
-            result.push_back({num, TokenType::Number});
+            result.push_back({num, TokenType::Number, currentLine});
             continue;
         }
 
         if (c == ':') {
-            result.push_back({":", TokenType::Colon});
+            result.push_back({":", TokenType::Colon, currentLine});
             curr++;
             continue;
         }
         if (c == '.') {
-            result.push_back({".", TokenType::Dot});
+            result.push_back({".", TokenType::Dot, currentLine});
             curr++;
             continue;
         }
         if (c == '=') {
-            result.push_back({"=", TokenType::Equals});
+            result.push_back({"=", TokenType::Equals, currentLine});
             curr++;
             continue;
         }
         if (c == ',') {
-            result.push_back({",", TokenType::Comma});
+            result.push_back({",", TokenType::Comma, currentLine});
             curr++;
             continue;
         }
         if (c == '(') {
-            result.push_back({"(", TokenType::LParen});
+            result.push_back({"(", TokenType::LParen, currentLine});
             curr++;
             continue;
         }
         if (c == ')') {
-            result.push_back({")", TokenType::RParen});
+            result.push_back({")", TokenType::RParen, currentLine});
             curr++;
             continue;
         }
@@ -78,6 +90,7 @@ std::vector<Token> tokenize(const std::string &source) {
         if (c == '/' && curr + 1 < source.length() && source[curr + 1] == '*') {
             while (curr + 1 < source.length() &&
                    !(source[curr] == '*' && source[curr + 1] == '/')) {
+                if (source[curr] == '\n') currentLine++;
                 curr++;
             }
             curr += 2;
@@ -87,11 +100,12 @@ std::vector<Token> tokenize(const std::string &source) {
             std::string text = "";
             curr++;
             while (curr < source.length() && source[curr] != '"') {
+                if (source[curr] == '\n') currentLine++;
                 text += source[curr];
                 curr++;
-                curr++;
             }
-            result.push_back({text, TokenType::StringLiteral});
+            curr++;
+            result.push_back({text, TokenType::StringLiteral, currentLine});
             continue;
         }
 
@@ -103,25 +117,25 @@ std::vector<Token> tokenize(const std::string &source) {
             }
 
             if (word == "message") {
-                result.push_back({word, TokenType::Keyword_Message});
+                result.push_back({word, TokenType::Keyword_Message, currentLine});
             } else if (word == "enum") {
-                result.push_back({word, TokenType::Keyword_Enum});
+                result.push_back({word, TokenType::Keyword_Enum, currentLine});
             } else if (word == "optional") {
-                result.push_back({word, TokenType::Keyword_Optional});
+                result.push_back({word, TokenType::Keyword_Optional, currentLine});
             } else if (word == "map") {
-                result.push_back({word, TokenType::Keyword_Map});
+                result.push_back({word, TokenType::Keyword_Map, currentLine});
             } else if (word == "union") {
-                result.push_back({word, TokenType::Keyword_Union});
+                result.push_back({word, TokenType::Keyword_Union, currentLine});
             } else if (word == "end") {
-                result.push_back({word, TokenType::Keyword_End});
+                result.push_back({word, TokenType::Keyword_End, currentLine});
             } else {
-                result.push_back({word, TokenType::Identifier});
+                result.push_back({word, TokenType::Identifier, currentLine});
             }
             continue;
         }
 
         curr++;
     }
-    result.push_back({"", TokenType::EndOfFile});
+    result.push_back({"", TokenType::EndOfFile, currentLine});
     return result;
 }

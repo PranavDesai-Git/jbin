@@ -24,6 +24,7 @@ enum class TokenType {
 struct Token {
     std::string value;
     TokenType type;
+    int line;
 };
 
 std::vector<Token> tokenize(const std::string &source);
