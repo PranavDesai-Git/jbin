@@ -11,10 +11,9 @@
 
 ### DOING
 - [ ] Semantic Analyzer
-    - [ ] Symbol Table generation
+    - [x] Symbol Table generation
     - [ ] Type resolution (check if custom types exist)
     - [ ] Validation: Map keys must be scalar
-    - [ ] Validation: Enums must have a `0.` value
     - [ ] Validation: No duplicate field numbers in a message
 
 ### DONE
