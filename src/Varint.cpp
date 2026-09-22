@@ -28,3 +28,12 @@ uint64_t decodeVariant(const std::vector<uint8_t> &buffer, size_t &offset) {
     result |= cast;
     return result;
 }
+
+uint64_t encodeZigZag(int64_t value) {
+    return (static_cast<uint64_t>(value) << 1) ^
+           static_cast<uint64_t>(value >> 63);
+}
+
+int64_t decodeZigZag(uint64_t value) {
+    return static_cast<int64_t>((value >> 1) ^ (~(value & 1) + 1));
+}
