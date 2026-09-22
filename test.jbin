@@ -1,0 +1,16 @@
+package "com.game.core"
+import "math.jbin"
+
+enum Activity:
+    1. active
+    2. inactive // the user went offline
+end
+
+message Player:
+    1. name: string
+    2. health: i32 = 100
+    3. activeStatus: Activity
+    4. weapons: list(string)
+    5. connections: list(Player)
+    6. inventory: map(string, i32)
+end
