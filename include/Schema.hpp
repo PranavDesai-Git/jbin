@@ -40,6 +40,8 @@ struct EnumDef {
 };
 
 struct Schema {
+    std::string packageName = "";
+    std::vector<std::string> imports;
     std::vector<EnumDef> enums;
     std::vector<MessageDef> messages;
 };

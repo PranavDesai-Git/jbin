@@ -161,13 +161,26 @@ Schema Parser::parse() {
             consume();
             continue;
         }
-        if (peek().type == TokenType::Keyword_Message)
+        if (peek().type == TokenType::Keyword_Package) {
+            consume();
+            if (peek().type == TokenType::StringLiteral) {
+                s.packageName = consume().value;
+            } else {
+                throw std::runtime_error("Expected string literal after package");
+            }
+        } else if (peek().type == TokenType::Keyword_Import) {
+            consume();
+            if (peek().type == TokenType::StringLiteral) {
+                s.imports.push_back(consume().value);
+            } else {
+                throw std::runtime_error("Expected string literal after import");
+            }
+        } else if (peek().type == TokenType::Keyword_Message)
             s.messages.push_back(parseMessage());
         else if (peek().type == TokenType::Keyword_Enum)
             s.enums.push_back(parseEnum());
-        else {
-            throw std::runtime_error("Expected enum or message");
-        }
+        else
+            throw std::runtime_error("Unexpected token in global scope");
     }
     return s;
 }

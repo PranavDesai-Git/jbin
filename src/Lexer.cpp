@@ -136,6 +136,10 @@ std::vector<Token> tokenize(const std::string &source) {
                 result.push_back({word, TokenType::Keyword_Union, currentLine});
             } else if (word == "end") {
                 result.push_back({word, TokenType::Keyword_End, currentLine});
+            } else if (word == "package") {
+                result.push_back({word, TokenType::Keyword_Package, currentLine});
+            } else if (word == "import") {
+                result.push_back({word, TokenType::Keyword_Import, currentLine});
             } else {
                 result.push_back({word, TokenType::Identifier, currentLine});
             }

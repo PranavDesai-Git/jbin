@@ -9,6 +9,8 @@ enum class TokenType {
     Keyword_Map,
     Keyword_Union,
     Keyword_End,
+    Keyword_Package,
+    Keyword_Import,
     Identifier,
     Number,
     StringLiteral,

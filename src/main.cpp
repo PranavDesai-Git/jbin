@@ -7,17 +7,19 @@ int main() {
     // I am intentionally writing a broken schema to test the Semantic Analyzer!
     // Can you spot the two errors?
     std::string schemaText = R"(
+        // This is a test schema!
+        package "com.game.core"
+        import "math.jbin"
+
         enum Activity:
             1. active
-            2. inactive
+            2. inactive // the user went offline
         end
 
         message Player:
             1. name: string
             2. health: i32 = 100
             3. activeStatus: Activity
-            3. brokenField: map(Player, i32)  // ERROR 1: Duplicate tag '3'
-            4. fake: NonExistentType         // ERROR 2: Type doesn't exist
         end
     )";
 
@@ -31,7 +33,10 @@ int main() {
         analyzer.analyze(schema);
 
         std::cout << "Successfully parsed schema" << std::endl;
-        std::cout << "Found " << schema.messages.size() << " messages and "
+        std::cout << "Package: " << schema.packageName << std::endl;
+        std::cout << "Imports: ";
+        for (const auto& imp : schema.imports) std::cout << imp << " ";
+        std::cout << "\nFound " << schema.messages.size() << " messages and "
                   << schema.enums.size() << " enums." << std::endl;
 
     } catch (const std::exception &e) {
