@@ -14,21 +14,25 @@ struct Field {
     DataType type;
     bool isOptional = false;
     std::string defaultValue = "";
+    int line = 0;
 };
 
 struct MessageDef {
     std::string name;
     std::vector<Field> fields;
+    int line = 0;
 };
 
 struct EnumEntry {
     uint32_t number;
     std::string name;
+    int line = 0;
 };
 
 struct EnumDef {
     std::string name;
     std::vector<EnumEntry> entries;
+    int line = 0;
 };
 
 struct Schema {
