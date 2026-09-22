@@ -111,7 +111,7 @@ std::vector<Token> tokenize(const std::string &source) {
 
         if (std::isalpha(c)) {
             std::string word = "";
-            while (curr < source.length() && std::isalpha(source[curr])) {
+            while (curr < source.length() && std::isalnum(source[curr])) {
                 word += source[curr];
                 curr++;
             }
