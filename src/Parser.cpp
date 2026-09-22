@@ -77,6 +77,9 @@ Field Parser::parseField() {
             throw std::runtime_error("Expected a value after =");
         }
     }
+    while (!isAtEnd() && peek().type == TokenType::Comment) {
+        f.comment += consume().value + "\n";
+    }
     return f;
 }
 
@@ -98,6 +101,7 @@ MessageDef Parser::parseMessage() {
         throw std::runtime_error("Expected ':' after identifier");
     }
     while (!isAtEnd() && peek().type != TokenType::Keyword_End) {
+        if (peek().type == TokenType::Comment) { consume(); continue; }
         m.fields.push_back(parseField());
     }
     consume();
@@ -122,6 +126,7 @@ EnumDef Parser::parseEnum() {
         throw std::runtime_error("Expected ':' after identifier");
     }
     while (!isAtEnd() && peek().type != TokenType::Keyword_End) {
+        if (peek().type == TokenType::Comment) { consume(); continue; }
         EnumEntry ee;
         ee.line = peek().line;
         if (!isAtEnd() && peek().type == TokenType::Number) {
@@ -140,6 +145,9 @@ EnumDef Parser::parseEnum() {
         } else {
             throw std::runtime_error("Expected identifier");
         }
+        while (!isAtEnd() && peek().type == TokenType::Comment) {
+            ee.comment += consume().value + "\n";
+        }
         e.entries.push_back(ee);
     }
     consume();
@@ -149,6 +157,10 @@ EnumDef Parser::parseEnum() {
 Schema Parser::parse() {
     Schema s;
     while (!isAtEnd()) {
+        if (peek().type == TokenType::Comment) {
+            consume();
+            continue;
+        }
         if (peek().type == TokenType::Keyword_Message)
             s.messages.push_back(parseMessage());
         else if (peek().type == TokenType::Keyword_Enum)

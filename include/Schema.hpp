@@ -15,24 +15,28 @@ struct Field {
     bool isOptional = false;
     std::string defaultValue = "";
     int line = 0;
+    std::string comment = "";
 };
 
 struct MessageDef {
     std::string name;
     std::vector<Field> fields;
     int line = 0;
+    std::string comment = "";
 };
 
 struct EnumEntry {
     uint32_t number;
     std::string name;
     int line = 0;
+    std::string comment = "";
 };
 
 struct EnumDef {
     std::string name;
     std::vector<EnumEntry> entries;
     int line = 0;
+    std::string comment = "";
 };
 
 struct Schema {
