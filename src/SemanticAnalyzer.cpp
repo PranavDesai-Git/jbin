@@ -1,10 +1,25 @@
 #include "SemanticAnalyzer.hpp"
 #include "Schema.hpp"
 #include <stdexcept>
+#include <string>
 
 void SemanticAnalyzer::analyze(const Schema &schema) {
     buildSymbolTable(schema);
+    validateEnums(schema);
     validateMessages(schema);
+    validateCyclicDependencies(schema);
+}
+
+void SemanticAnalyzer::validateEnums(const Schema &schema) {
+    for (const auto &e : schema.enums) {
+        std::unordered_set<uint32_t> seenNumbers;
+        for (const auto &entry : e.entries) {
+            if (seenNumbers.contains(entry.number)) {
+                throw std::runtime_error("Duplicate number in enum " + e.name + " at line " + std::to_string(entry.line));
+            }
+            seenNumbers.insert(entry.number);
+        }
+    }
 }
 
 void SemanticAnalyzer::buildSymbolTable(const Schema &schema) {
@@ -55,6 +70,51 @@ void SemanticAnalyzer::validateMessages(const Schema &schema) {
                     throw std::runtime_error("Map keys must be a scalar type (like 'string' or 'i32') at line " + std::to_string(f.line));
                 }
             }
+
+            // Validate Default Values!
+            if (!f.defaultValue.empty()) {
+                if (f.type.name == "i32" || f.type.name == "i64") {
+                    try {
+                        std::stoi(f.defaultValue);
+                    } catch (...) {
+                        throw std::runtime_error("Invalid default value for integer type at line " + std::to_string(f.line));
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool SemanticAnalyzer::checkCycle(const std::string& currentType, std::unordered_set<std::string>& visited, std::unordered_set<std::string>& recursionStack, const Schema& schema) {
+    if (recursionStack.contains(currentType)) return true;
+    if (visited.contains(currentType)) return false;
+
+    visited.insert(currentType);
+    recursionStack.insert(currentType);
+
+    for (const auto& m : schema.messages) {
+        if (m.name == currentType) {
+            for (const auto& f : m.fields) {
+                // If it's a direct custom type (not in a list, map, or optional), it could be a cycle!
+                if (!isBuiltInType(f.type.name) && !f.isOptional) {
+                    if (checkCycle(f.type.name, visited, recursionStack, schema)) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    recursionStack.erase(currentType);
+    return false;
+}
+
+void SemanticAnalyzer::validateCyclicDependencies(const Schema &schema) {
+    std::unordered_set<std::string> visited;
+    std::unordered_set<std::string> recursionStack;
+    for (const auto& m : schema.messages) {
+        if (checkCycle(m.name, visited, recursionStack, schema)) {
+            throw std::runtime_error("Cyclic dependency detected! Message '" + m.name + "' has an infinite size struct.");
         }
     }
 }
