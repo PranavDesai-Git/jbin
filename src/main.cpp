@@ -2,76 +2,75 @@
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "SemanticAnalyzer.hpp"
-#include <iomanip>
+#include <cxxopts.hpp>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 
-int main() {
-    std::string schemaText = R"(
-        // This is a test schema!
-        package "com.game.core"
-        import "math.jbin"
-
-        enum Activity:
-            1. active
-            2. inactive // the user went offline
-        end
-
-        message Player:
-            1. name: string
-            2. health: i32 = 100
-            3. activeStatus: Activity
-            4. weapons: list(string)
-            5. connections: list(Player)
-            6. inventory: map(string, i32)
-        end
-    )";
-
+int main(int argc, char *argv[]) {
     try {
-        std::vector<Token> tokens = tokenize(schemaText);
+        cxxopts::Options options("jbin", "jbin schema compiler");
 
-        Parser parser(tokens);
-        Schema schema = parser.parse();
+        options.add_options()
+            ("command", "Command to run (e.g. build)", cxxopts::value<std::string>())
+            ("input", "Input schema file", cxxopts::value<std::string>())
+            ("o,out", "Output language (c, cpp, python, js)", cxxopts::value<std::string>())
+            ("h,help", "Print usage");
 
-        SemanticAnalyzer analyzer;
-        analyzer.analyze(schema);
+        options.parse_positional({"command", "input"});
+        auto result = options.parse(argc, argv);
 
-        std::cout << "Successfully parsed schema" << std::endl;
-        std::cout << "Package: " << schema.packageName << std::endl;
-        std::cout << "Imports: ";
-        for (const auto &imp : schema.imports)
-            std::cout << imp << " ";
-        std::cout << "\nFound " << schema.messages.size() << " messages and "
-                  << schema.enums.size() << " enums." << std::endl;
-
-        nlohmann::json testJson = {
-            {"name", "Hero"},
-            {"health", 100},
-            {"activeStatus", "active"},
-            {"weapons", {"Sword", "Shield"}},
-            {"connections", {
-                {{"name", "NPC1"}, {"health", 50}}
-            }},
-            {"inventory", {
-                {"gold", 500},
-                {"potions", 3}
-            }}
-        }; DynamicPacker packer(schema);
-        std::vector<uint8_t> binaryBuffer = packer.pack("Player", testJson);
-
-        std::cout << "\nPacked into " << binaryBuffer.size() << " bytes: ";
-        for (uint8_t b : binaryBuffer) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)b
-                      << " ";
+        if (result.count("help") || result.arguments().empty()) {
+            std::cout << options.help() << std::endl;
+            return 0;
         }
-        std::cout << std::dec << "\n";
 
-        DynamicReader reader(schema);
-        nlohmann::json unpackedJson = reader.unpack("Player", binaryBuffer);
+        std::string command = result["command"].as<std::string>();
+        if (command == "build") {
+            if (!result.count("input")) {
+                std::cerr << "Error: No input file specified." << std::endl;
+                return 1;
+            }
+            if (!result.count("out")) {
+                std::cerr << "Error: --out flag is required (e.g., --out c)." << std::endl;
+                return 1;
+            }
 
-        std::cout << "Unpacked JSON: \n" << unpackedJson.dump(4) << "\n";
+            std::string inputFile = result["input"].as<std::string>();
+            std::string targetLang = result["out"].as<std::string>();
 
+            std::ifstream file(inputFile);
+            if (!file.is_open()) {
+                std::cerr << "Error: Could not open file " << inputFile << std::endl;
+                return 1;
+            }
+
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            std::string schemaText = buffer.str();
+
+            std::cout << "Compiling " << inputFile << " for target " << targetLang << "..." << std::endl;
+
+            std::vector<Token> tokens = tokenize(schemaText);
+            Parser parser(tokens);
+            Schema schema = parser.parse();
+
+            SemanticAnalyzer analyzer;
+            analyzer.analyze(schema);
+
+            std::cout << "Successfully parsed schema!" << std::endl;
+            std::cout << "Package: " << schema.packageName << std::endl;
+            std::cout << "Found " << schema.messages.size() << " messages and "
+                      << schema.enums.size() << " enums." << std::endl;
+
+            // TODO: Pass schema to Codegen Visitor based on targetLang!
+        } else {
+            std::cerr << "Unknown command: " << command << std::endl;
+            return 1;
+        }
     } catch (const std::exception &e) {
         std::cerr << "Compiler Error: " << e.what() << std::endl;
+        return 1;
     }
 
     return 0;
