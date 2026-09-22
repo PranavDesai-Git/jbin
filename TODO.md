@@ -10,15 +10,14 @@
 - [ ] Runtime FFI bindings / getters
 
 ### DOING
-- [ ] Semantic Analyzer
-    - [x] Symbol Table generation
-    - [ ] Type resolution (check if custom types exist)
-    - [ ] Validation: Map keys must be scalar
-    - [ ] Validation: No duplicate field numbers in a message
-
 ### DONE
 - [x] Lexer (with string literals, map, union, optional)
 - [x] Parser (Recursive Descent AST builder)
 - [x] Encode/Decode String
 - [x] Encode/Decode Tag
 - [x] Encode/Decode Varint
+- [x] Semantic Analyzer
+    - [x] Symbol Table generation
+    - [x] Type resolution (check if custom types exist)
+    - [x] Validation: Map keys must be scalar
+    - [x] Validation: No duplicate field numbers in a message

@@ -4,6 +4,8 @@
 #include <vector>
 
 /*
+package "com.player"
+import "math.jbin"
 enum Activity:
     1. active
     2. inactive
@@ -14,7 +16,7 @@ end
 message Player:
       1. name: string
       2. health: i32 = 100 // default value
-      3. weapons: list(string)
+      3. optional weapons: list(string)
       4. connections: list(Player)
       5. activeStatus: Activity
       6. inventory: map(string, i32)
@@ -34,7 +36,7 @@ std::vector<Token> tokenize(const std::string &source) {
             curr++;
             continue;
         }
-        
+
         if (std::isspace(c)) {
             curr++;
             continue;
@@ -96,7 +98,8 @@ std::vector<Token> tokenize(const std::string &source) {
             curr += 2;
             while (curr + 1 < source.length() &&
                    !(source[curr] == '*' && source[curr + 1] == '/')) {
-                if (source[curr] == '\n') currentLine++;
+                if (source[curr] == '\n')
+                    currentLine++;
                 text += source[curr];
                 curr++;
             }
@@ -108,7 +111,8 @@ std::vector<Token> tokenize(const std::string &source) {
             std::string text = "";
             curr++;
             while (curr < source.length() && source[curr] != '"') {
-                if (source[curr] == '\n') currentLine++;
+                if (source[curr] == '\n')
+                    currentLine++;
                 text += source[curr];
                 curr++;
             }
@@ -125,11 +129,13 @@ std::vector<Token> tokenize(const std::string &source) {
             }
 
             if (word == "message") {
-                result.push_back({word, TokenType::Keyword_Message, currentLine});
+                result.push_back(
+                    {word, TokenType::Keyword_Message, currentLine});
             } else if (word == "enum") {
                 result.push_back({word, TokenType::Keyword_Enum, currentLine});
             } else if (word == "optional") {
-                result.push_back({word, TokenType::Keyword_Optional, currentLine});
+                result.push_back(
+                    {word, TokenType::Keyword_Optional, currentLine});
             } else if (word == "map") {
                 result.push_back({word, TokenType::Keyword_Map, currentLine});
             } else if (word == "union") {
@@ -137,9 +143,11 @@ std::vector<Token> tokenize(const std::string &source) {
             } else if (word == "end") {
                 result.push_back({word, TokenType::Keyword_End, currentLine});
             } else if (word == "package") {
-                result.push_back({word, TokenType::Keyword_Package, currentLine});
+                result.push_back(
+                    {word, TokenType::Keyword_Package, currentLine});
             } else if (word == "import") {
-                result.push_back({word, TokenType::Keyword_Import, currentLine});
+                result.push_back(
+                    {word, TokenType::Keyword_Import, currentLine});
             } else {
                 result.push_back({word, TokenType::Identifier, currentLine});
             }
