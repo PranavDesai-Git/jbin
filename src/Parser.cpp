@@ -29,6 +29,7 @@ DataType Parser::parseDataType() {
 
 Field Parser::parseField() {
     Field f;
+    f.line = peek().line;
     if (!isAtEnd() && peek().type == TokenType::Keyword_Optional) {
         f.isOptional = true;
         consume();
@@ -81,6 +82,7 @@ Field Parser::parseField() {
 
 MessageDef Parser::parseMessage() {
     MessageDef m;
+    m.line = peek().line;
     if (!isAtEnd() && peek().type == TokenType::Keyword_Message) {
         consume();
     }
@@ -104,6 +106,7 @@ MessageDef Parser::parseMessage() {
 
 EnumDef Parser::parseEnum() {
     EnumDef e;
+    e.line = peek().line;
     if (!isAtEnd() && peek().type == TokenType::Keyword_Enum) {
         consume();
     }
@@ -120,6 +123,7 @@ EnumDef Parser::parseEnum() {
     }
     while (!isAtEnd() && peek().type != TokenType::Keyword_End) {
         EnumEntry ee;
+        ee.line = peek().line;
         if (!isAtEnd() && peek().type == TokenType::Number) {
             ee.number = std::stoi(consume().value);
         } else {
