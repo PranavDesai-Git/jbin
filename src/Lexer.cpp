@@ -82,18 +82,26 @@ std::vector<Token> tokenize(const std::string &source) {
         }
 
         if (c == '/' && curr + 1 < source.length() && source[curr + 1] == '/') {
+            std::string text = "";
+            curr += 2;
             while (curr < source.length() && source[curr] != '\n') {
+                text += source[curr];
                 curr++;
             }
+            result.push_back({text, TokenType::Comment, currentLine});
             continue;
         }
         if (c == '/' && curr + 1 < source.length() && source[curr + 1] == '*') {
+            std::string text = "";
+            curr += 2;
             while (curr + 1 < source.length() &&
                    !(source[curr] == '*' && source[curr + 1] == '/')) {
                 if (source[curr] == '\n') currentLine++;
+                text += source[curr];
                 curr++;
             }
             curr += 2;
+            result.push_back({text, TokenType::Comment, currentLine});
             continue;
         }
         if (c == '"') {

@@ -12,6 +12,7 @@ enum class TokenType {
     Identifier,
     Number,
     StringLiteral,
+    Comment,
     Equals,
     Colon,
     Comma,
