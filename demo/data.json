@@ -1,0 +1,19 @@
+{
+    "id": 123456789,
+    "name": "LeroyJenkins",
+    "level": 60,
+    "faction": "alliance",
+    "position": {
+        "x": 100,
+        "y": 200,
+        "z": 300
+    },
+    "inventory": [
+        { "itemId": 999, "quantity": 1, "isSoulbound": true },
+        { "itemId": 45, "quantity": 100, "isSoulbound": false }
+    ],
+    "attributes": {
+        "strength": 120,
+        "agility": 45
+    }
+}

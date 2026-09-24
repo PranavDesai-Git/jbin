@@ -1,0 +1,29 @@
+package "com.mmo.game"
+
+enum Faction:
+    1. alliance
+    2. horde
+    3. neutral
+end
+
+message Vector3:
+    1. x: i32
+    2. y: i32
+    3. z: i32
+end
+
+message InventoryItem:
+    1. itemId: i32
+    2. quantity: i32
+    3. isSoulbound: bool
+end
+
+message Character:
+    1. id: i64
+    2. name: string
+    3. level: i32
+    4. faction: Faction
+    5. position: Vector3
+    6. inventory: list(InventoryItem)
+    7. attributes: map(string, i32)
+end
