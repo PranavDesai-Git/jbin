@@ -47,8 +47,8 @@ jobs:
       - name: Rename Artifact
         shell: bash
         run: |
-          cd build
-          mv ${{ matrix.artifact_name }} ${{ matrix.asset_name }}
+          EXEC_PATH=$(find build -type f -name "${{ matrix.artifact_name }}")
+          mv "$EXEC_PATH" build/${{ matrix.asset_name }}
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
