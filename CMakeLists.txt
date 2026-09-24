@@ -13,11 +13,7 @@ FetchContent_Declare(
 )
 
 
-FetchContent_Declare(
-    zstd
-    URL https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
-    SOURCE_SUBDIR build/cmake
-)
+
 
 FetchContent_Declare(
     cxxopts
@@ -30,7 +26,6 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(json)
-FetchContent_MakeAvailable(zstd)
 FetchContent_MakeAvailable(cxxopts)
 FetchContent_MakeAvailable(Catch2)
 
@@ -44,7 +39,7 @@ list(REMOVE_ITEM LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 # 2. Create the core library
 add_library(jbin_core STATIC ${LIB_SOURCES})
 target_include_directories(jbin_core PUBLIC include)
-target_link_libraries(jbin_core PUBLIC nlohmann_json::nlohmann_json libzstd_static)
+target_link_libraries(jbin_core PUBLIC nlohmann_json::nlohmann_json)
 
 # 3. Create the main executable
 add_executable(jbin src/main.cpp)
