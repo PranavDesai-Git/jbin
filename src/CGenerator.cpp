@@ -137,6 +137,72 @@ void CGenerator::visit(const Schema &schema) {
                         }
                         out << "    } payload;\n"
                             << "} " << cname << ";\n\n";
+
+                        // Generate pack for union
+                        out << "static inline size_t " << cname << "_pack(const " << cname << "* msg, uint8_t* buffer) {\n";
+                        out << "    size_t offset = 0;\n";
+                        out << "    jbin_encode_varint(buffer, &offset, (1 << 3) | 0);\n";
+                        out << "    jbin_encode_varint(buffer, &offset, (uint64_t)msg->tag);\n";
+                        out << "    uint8_t* temp = (uint8_t*)malloc(4096);\n";
+                        out << "    size_t temp_len = 0;\n";
+                        out << "    switch(msg->tag) {\n";
+                        for (size_t i = 0; i < f.type.subTypes.size(); ++i) {
+                            out << "        case " << i << ":\n";
+                            bool tVarint = (f.type.subTypes[i].name == "i32" || f.type.subTypes[i].name == "i64" || f.type.subTypes[i].name == "bool" || isEnum(f.type.subTypes[i].name, currentSchema));
+                            if (tVarint) {
+                                out << "            jbin_encode_varint(temp, &temp_len, (uint64_t)msg->payload.value_" << i << ");\n";
+                            } else if (f.type.subTypes[i].name == "string") {
+                                out << "            jbin_encode_string(temp, &temp_len, msg->payload.value_" << i << ");\n";
+                            } else {
+                                out << "            temp_len = " << f.type.subTypes[i].name << "_pack(&msg->payload.value_" << i << ", temp);\n";
+                            }
+                            out << "            break;\n";
+                        }
+                        out << "    }\n";
+                        out << "    if (temp_len > 0) {\n";
+                        out << "        jbin_encode_varint(buffer, &offset, (2 << 3) | 3);\n";
+                        out << "        jbin_encode_varint(buffer, &offset, temp_len);\n";
+                        out << "        memcpy(buffer + offset, temp, temp_len);\n";
+                        out << "        offset += temp_len;\n";
+                        out << "    }\n";
+                        out << "    free(temp);\n";
+                        out << "    return offset;\n";
+                        out << "}\n\n";
+
+                        // Generate unpack for union
+                        out << "static inline bool " << cname << "_unpack(const uint8_t *buffer, size_t length, " << cname << "* out_msg) {\n";
+                        out << "    size_t offset = 0;\n";
+                        out << "    while(offset < length) {\n";
+                        out << "        uint32_t ftag = jbin_decode_varint(buffer, &offset);\n";
+                        out << "        if ((ftag >> 3) == 1) {\n";
+                        out << "            out_msg->tag = jbin_decode_varint(buffer, &offset);\n";
+                        out << "        } else if ((ftag >> 3) == 2) {\n";
+                        out << "            switch(out_msg->tag) {\n";
+                        for (size_t i = 0; i < f.type.subTypes.size(); ++i) {
+                            out << "                case " << i << ":\n";
+                            bool tVarint = (f.type.subTypes[i].name == "i32" || f.type.subTypes[i].name == "i64" || f.type.subTypes[i].name == "bool" || isEnum(f.type.subTypes[i].name, currentSchema));
+                            if (tVarint) {
+                                out << "                    out_msg->payload.value_" << i << " = jbin_decode_varint(buffer, &offset);\n";
+                            } else if (f.type.subTypes[i].name == "string") {
+                                out << "                    out_msg->payload.value_" << i << " = jbin_decode_string(buffer, &offset);\n";
+                            } else {
+                                out << "                    size_t vlen = jbin_decode_varint(buffer, &offset);\n";
+                                out << "                    " << f.type.subTypes[i].name << "_unpack(buffer + offset, vlen, &out_msg->payload.value_" << i << ");\n";
+                                out << "                    offset += vlen;\n";
+                            }
+                            out << "                    break;\n";
+                        }
+                        out << "            }\n";
+                        out << "        } else {\n";
+                        out << "            uint32_t wireType = ftag & 0x7;\n";
+                        out << "            if (wireType == 0) jbin_decode_varint(buffer, &offset);\n";
+                        out << "            else if (wireType == 3) offset += jbin_decode_varint(buffer, &offset);\n";
+                        out << "            else if (wireType == 1) offset += 4;\n";
+                        out << "            else if (wireType == 2) offset += 8;\n";
+                        out << "        }\n";
+                        out << "    }\n";
+                        out << "    return true;\n";
+                        out << "}\n\n";
                     }
                 }
             }
@@ -270,7 +336,8 @@ void CGenerator::visit(const MessageDef &message) {
             // Nested Message
             out << "    {\n";
             out << "        uint8_t* temp = (uint8_t*)malloc(4096);\n";
-            out << "        size_t temp_len = " << f.type.name << "_pack(&msg->" << f.name << ", temp);\n";
+            std::string packFunc = (f.type.name == "union") ? getCType(f.type, currentSchema) : f.type.name;
+            out << "        size_t temp_len = " << packFunc << "_pack(&msg->" << f.name << ", temp);\n";
             out << "        jbin_encode_varint(buffer, &offset, (" << f.number << " << 3) | 3);\n";
             out << "        jbin_encode_varint(buffer, &offset, temp_len);\n";
             out << "        memcpy(buffer + offset, temp, temp_len);\n";
@@ -351,7 +418,8 @@ void CGenerator::visit(const MessageDef &message) {
             // Nested message unpack
             out << "                {\n";
             out << "                    size_t len = jbin_decode_varint(buffer, &offset);\n";
-            out << "                    " << f.type.name << "_unpack(buffer + offset, len, &out_msg->" << f.name << ");\n";
+            std::string unpackFunc = (f.type.name == "union") ? getCType(f.type, currentSchema) : f.type.name;
+            out << "                    " << unpackFunc << "_unpack(buffer + offset, len, &out_msg->" << f.name << ");\n";
             out << "                    offset += len;\n";
             out << "                }\n";
         }
