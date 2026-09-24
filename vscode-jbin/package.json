@@ -1,0 +1,33 @@
+{
+  "name": "jbin-syntax",
+  "displayName": "jbin",
+  "description": "Syntax highlighting for jbin schema files",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.0.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "jbin",
+        "aliases": [
+          "jbin"
+        ],
+        "extensions": [
+          ".jbin"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "jbin",
+        "scopeName": "source.jbin",
+        "path": "./syntaxes/jbin.tmLanguage.json"
+      }
+    ]
+  }
+}
