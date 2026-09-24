@@ -24,20 +24,38 @@ FetchContent_Declare(
     URL https://github.com/jarro2783/cxxopts/archive/refs/tags/v3.1.1.tar.gz
 )
 
+FetchContent_Declare(
+    Catch2
+    URL https://github.com/catchorg/Catch2/archive/refs/tags/v3.5.2.tar.gz
+)
+
 FetchContent_MakeAvailable(json)
 FetchContent_MakeAvailable(zstd)
 FetchContent_MakeAvailable(cxxopts)
+FetchContent_MakeAvailable(Catch2)
+
+enable_testing()
 
 
 # 1. Automatically find all .cpp files in the src/ directory
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE LIB_SOURCES "src/*.cpp")
+list(REMOVE_ITEM LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 
-# 2. Create the executable using those automatically found files
-add_executable(jbin ${SOURCES})
+# 2. Create the core library
+add_library(jbin_core STATIC ${LIB_SOURCES})
+target_include_directories(jbin_core PUBLIC include)
+target_link_libraries(jbin_core PUBLIC nlohmann_json::nlohmann_json libzstd_static)
 
-# 3. Tell CMake that header files (.hpp) live in the include/ folder
-target_include_directories(jbin PRIVATE include)
+# 3. Create the main executable
+add_executable(jbin src/main.cpp)
+target_link_libraries(jbin PRIVATE jbin_core cxxopts::cxxopts)
 
-target_link_libraries(jbin PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(jbin PRIVATE libzstd_static)
-target_link_libraries(jbin PRIVATE cxxopts::cxxopts)
+# 4. Create the test executable
+file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
+if (TEST_SOURCES)
+    add_executable(jbin_tests ${TEST_SOURCES})
+    target_link_libraries(jbin_tests PRIVATE jbin_core Catch2::Catch2WithMain)
+    
+    include(Catch)
+    catch_discover_tests(jbin_tests)
+endif()
