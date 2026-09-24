@@ -1,0 +1,60 @@
+name: Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: jbin
+            asset_name: jbin-linux-amd64
+          - os: ubuntu-latest
+            artifact_name: jbin
+            asset_name: jbin-linux-arm64
+            # We'll use a docker container or cross compiler for arm64 if needed, but for simplicity let's rely on standard actions
+            # Actually, standard ubuntu-latest is x86_64.
+            # To compile for Windows and macOS:
+          - os: windows-latest
+            artifact_name: jbin.exe
+            asset_name: jbin-windows-amd64.exe
+          - os: macos-latest
+            artifact_name: jbin
+            asset_name: jbin-macos-amd64
+          - os: macos-14 # Apple Silicon
+            artifact_name: jbin
+            asset_name: jbin-macos-arm64
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2.0
+        with:
+          cmake-version: '3.20.x'
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build jbin
+        run: cmake --build build --config Release -j 4
+
+      - name: Rename Artifact
+        shell: bash
+        run: |
+          cd build
+          mv ${{ matrix.artifact_name }} ${{ matrix.asset_name }}
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/${{ matrix.asset_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
