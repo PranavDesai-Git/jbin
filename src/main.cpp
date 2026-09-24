@@ -1,8 +1,8 @@
+#include "CGenerator.hpp"
 #include "DynamicPacker.hpp"
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "SemanticAnalyzer.hpp"
-#include "CGenerator.hpp"
 #include <cxxopts.hpp>
 #include <fstream>
 #include <iostream>
@@ -12,13 +12,17 @@ int main(int argc, char *argv[]) {
     try {
         cxxopts::Options options("jbin", "jbin schema compiler");
 
-        options.add_options()
-            ("command", "Command to run (e.g. build, pack)", cxxopts::value<std::string>())
-            ("input", "Input schema file", cxxopts::value<std::string>())
-            ("o,out", "Output (target language for build, or output binary file for pack)", cxxopts::value<std::string>())
-            ("j,json", "Input JSON file (for pack command)", cxxopts::value<std::string>())
-            ("m,msg", "Root message name to pack (for pack command)", cxxopts::value<std::string>())
-            ("h,help", "Print usage");
+        options.add_options()("command", "Command to run (e.g. build, pack)",
+                              cxxopts::value<std::string>())(
+            "input", "Input schema file", cxxopts::value<std::string>())(
+            "o,out",
+            "Output (target language for build, or output binary file for "
+            "pack)",
+            cxxopts::value<std::string>())("j,json",
+                                           "Input JSON file (for pack command)",
+                                           cxxopts::value<std::string>())(
+            "m,msg", "Root message name to pack (for pack command)",
+            cxxopts::value<std::string>())("h,help", "Print usage");
 
         options.parse_positional({"command", "input"});
         auto result = options.parse(argc, argv);
@@ -35,7 +39,8 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             if (!result.count("out")) {
-                std::cerr << "Error: --out flag is required (e.g., --out c)." << std::endl;
+                std::cerr << "Error: --out flag is required (e.g., --out c)."
+                          << std::endl;
                 return 1;
             }
 
@@ -44,15 +49,14 @@ int main(int argc, char *argv[]) {
 
             std::ifstream file(inputFile);
             if (!file.is_open()) {
-                std::cerr << "Error: Could not open file " << inputFile << std::endl;
+                std::cerr << "Error: Could not open file " << inputFile
+                          << std::endl;
                 return 1;
             }
 
             std::stringstream buffer;
             buffer << file.rdbuf();
             std::string schemaText = buffer.str();
-
-            std::cout << "Compiling " << inputFile << " for target " << targetLang << "..." << std::endl;
 
             std::vector<Token> tokens = tokenize(schemaText);
             Parser parser(tokens);
@@ -61,20 +65,19 @@ int main(int argc, char *argv[]) {
             SemanticAnalyzer analyzer;
             analyzer.analyze(schema);
 
-            std::cout << "Successfully parsed schema!" << std::endl;
-            std::cout << "Package: " << schema.packageName << std::endl;
-            std::cout << "Found " << schema.messages.size() << " messages and "
-                      << schema.enums.size() << " enums." << std::endl;
-
             if (targetLang == "c") {
                 CGenerator cGen(std::cout);
                 schema.accept(cGen);
             } else {
-                std::cerr << "Code generation for '" << targetLang << "' is not supported yet!" << std::endl;
+                std::cerr << "Code generation for '" << targetLang
+                          << "' is not supported yet!" << std::endl;
             }
         } else if (command == "pack") {
-            if (!result.count("input") || !result.count("json") || !result.count("msg") || !result.count("out")) {
-                std::cerr << "Error: pack requires schema, --json, --msg, and --out" << std::endl;
+            if (!result.count("input") || !result.count("json") ||
+                !result.count("msg") || !result.count("out")) {
+                std::cerr
+                    << "Error: pack requires schema, --json, --msg, and --out"
+                    << std::endl;
                 return 1;
             }
             std::string schemaFile = result["input"].as<std::string>();
@@ -84,7 +87,8 @@ int main(int argc, char *argv[]) {
 
             // Parse schema
             std::ifstream sfile(schemaFile);
-            std::stringstream sbuffer; sbuffer << sfile.rdbuf();
+            std::stringstream sbuffer;
+            sbuffer << sfile.rdbuf();
             Parser parser(tokenize(sbuffer.str()));
             Schema schema = parser.parse();
             SemanticAnalyzer().analyze(schema);
@@ -92,21 +96,20 @@ int main(int argc, char *argv[]) {
             // Read JSON
             std::ifstream jfile(jsonFile);
             if (!jfile.is_open()) {
-                std::cerr << "Error: Could not open JSON file " << jsonFile << std::endl;
+                std::cerr << "Error: Could not open JSON file " << jsonFile
+                          << std::endl;
                 return 1;
             }
             nlohmann::json jsonData;
             jfile >> jsonData;
 
             // Pack
-            std::cout << "Packing " << msgName << " from " << jsonFile << "..." << std::endl;
             DynamicPacker packer(schema);
             std::vector<uint8_t> bin = packer.pack(msgName, jsonData);
 
             // Write Bin
             std::ofstream bfile(outFile, std::ios::binary);
-            bfile.write(reinterpret_cast<const char*>(bin.data()), bin.size());
-            std::cout << "Successfully packed " << bin.size() << " bytes into " << outFile << std::endl;
+            bfile.write(reinterpret_cast<const char *>(bin.data()), bin.size());
         } else {
             std::cerr << "Unknown command: " << command << std::endl;
             return 1;
