@@ -33,7 +33,7 @@ enable_testing()
 
 
 # 1. Automatically find all .cpp files in the src/ directory
-file(GLOB_RECURSE LIB_SOURCES "src/*.cpp")
+file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 list(REMOVE_ITEM LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 
 # 2. Create the core library
@@ -46,7 +46,7 @@ add_executable(jbin src/main.cpp)
 target_link_libraries(jbin PRIVATE jbin_core cxxopts::cxxopts)
 
 # 4. Create the test executable
-file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "tests/*.cpp")
 if (TEST_SOURCES)
     add_executable(jbin_tests ${TEST_SOURCES})
     target_link_libraries(jbin_tests PRIVATE jbin_core Catch2::Catch2WithMain)

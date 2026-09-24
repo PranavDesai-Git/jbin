@@ -20,7 +20,7 @@ DataType Parser::parseDataType() {
         if (peek().type == TokenType::RParen) {
             consume();
         } else {
-            throw std::runtime_error("Expected ')' after type list");
+            error("Expected ')' after type list");
         }
     }
 
@@ -30,7 +30,7 @@ DataType Parser::parseDataType() {
         if (!isAtEnd() && (t == TokenType::Identifier || t == TokenType::Number || t == TokenType::StringLiteral)) {
             result.defaultValue = consume().value;
         } else {
-            throw std::runtime_error("Expected a value after = in DataType");
+            error("Expected a value after = in DataType");
         }
     }
 
@@ -48,24 +48,24 @@ Field Parser::parseField() {
         int numToken = std::stoi(consume().value);
         f.number = numToken;
     } else {
-        throw std::runtime_error(
+        error(
             "Expected Tag Number at the start of the Field");
     }
     if (!isAtEnd() && peek().type == TokenType::Dot) {
         consume();
     } else {
-        throw std::runtime_error("Expected '.' after Number");
+        error("Expected '.' after Number");
     }
     if (!isAtEnd() && peek().type == TokenType::Identifier) {
         std::string nameToken = consume().value;
         f.name = nameToken;
     } else {
-        throw std::runtime_error("Expected an identifier");
+        error("Expected an identifier");
     }
     if (!isAtEnd() && peek().type == TokenType::Colon) {
         consume();
     } else {
-        throw std::runtime_error("Expected ' : ' after an identifier");
+        error("Expected ' : ' after an identifier");
     }
     TokenType t = peek().type;
     if (!isAtEnd() &&
@@ -74,7 +74,7 @@ Field Parser::parseField() {
         DataType typeToken = parseDataType();
         f.type = typeToken;
     } else {
-        throw std::runtime_error("Expected a datatype after identifier");
+        error("Expected a datatype after identifier");
     }
     if (!isAtEnd() && peek().type == TokenType::Equals) {
         consume();
@@ -84,7 +84,7 @@ Field Parser::parseField() {
              t == TokenType::StringLiteral)) {
             f.defaultValue = consume().value;
         } else {
-            throw std::runtime_error("Expected a value after =");
+            error("Expected a value after =");
         }
     }
     while (!isAtEnd() && peek().type == TokenType::Comment) {
@@ -103,12 +103,12 @@ MessageDef Parser::parseMessage() {
         std::string nameToken = consume().value;
         m.name = nameToken;
     } else {
-        throw std::runtime_error("Expected identifier after message");
+        error("Expected identifier after message");
     }
     if (!isAtEnd() && peek().type == TokenType::Colon) {
         consume();
     } else {
-        throw std::runtime_error("Expected ':' after identifier");
+        error("Expected ':' after identifier");
     }
     while (!isAtEnd() && peek().type != TokenType::Keyword_End) {
         if (peek().type == TokenType::Comment) { consume(); continue; }
@@ -128,12 +128,12 @@ EnumDef Parser::parseEnum() {
         std::string nameToken = consume().value;
         e.name = nameToken;
     } else {
-        throw std::runtime_error("Expected identifier after enum");
+        error("Expected identifier after enum");
     }
     if (!isAtEnd() && peek().type == TokenType::Colon) {
         consume();
     } else {
-        throw std::runtime_error("Expected ':' after identifier");
+        error("Expected ':' after identifier");
     }
     while (!isAtEnd() && peek().type != TokenType::Keyword_End) {
         if (peek().type == TokenType::Comment) { consume(); continue; }
@@ -142,18 +142,18 @@ EnumDef Parser::parseEnum() {
         if (!isAtEnd() && peek().type == TokenType::Number) {
             ee.number = std::stoi(consume().value);
         } else {
-            throw std::runtime_error("Expected a number for enum entry");
+            error("Expected a number for enum entry");
         }
         if (!isAtEnd() && peek().type == TokenType::Dot) {
             consume();
         } else {
-            throw std::runtime_error("Expected '.' after Number");
+            error("Expected '.' after Number");
         }
         if (!isAtEnd() && peek().type == TokenType::Identifier) {
             std::string nameToken = consume().value;
             ee.name = nameToken;
         } else {
-            throw std::runtime_error("Expected identifier");
+            error("Expected identifier");
         }
         while (!isAtEnd() && peek().type == TokenType::Comment) {
             ee.comment += consume().value + "\n";
@@ -176,21 +176,21 @@ Schema Parser::parse() {
             if (peek().type == TokenType::StringLiteral) {
                 s.packageName = consume().value;
             } else {
-                throw std::runtime_error("Expected string literal after package");
+                error("Expected string literal after package");
             }
         } else if (peek().type == TokenType::Keyword_Import) {
             consume();
             if (peek().type == TokenType::StringLiteral) {
                 s.imports.push_back(consume().value);
             } else {
-                throw std::runtime_error("Expected string literal after import");
+                error("Expected string literal after import");
             }
         } else if (peek().type == TokenType::Keyword_Message)
             s.messages.push_back(parseMessage());
         else if (peek().type == TokenType::Keyword_Enum)
             s.enums.push_back(parseEnum());
         else
-            throw std::runtime_error("Unexpected token in global scope");
+            error("Unexpected token in global scope");
     }
     return s;
 }
