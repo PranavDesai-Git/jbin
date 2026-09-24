@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+class SchemaVisitor;
+
 struct DataType {
     std::string name;
     std::vector<DataType> subTypes;
@@ -16,6 +18,8 @@ struct Field {
     std::string defaultValue = "";
     int line = 0;
     std::string comment = "";
+
+    void accept(SchemaVisitor &visitor) const;
 };
 
 struct MessageDef {
@@ -23,6 +27,8 @@ struct MessageDef {
     std::vector<Field> fields;
     int line = 0;
     std::string comment = "";
+
+    void accept(SchemaVisitor &visitor) const;
 };
 
 struct EnumEntry {
@@ -30,6 +36,8 @@ struct EnumEntry {
     std::string name;
     int line = 0;
     std::string comment = "";
+
+    void accept(SchemaVisitor &visitor) const;
 };
 
 struct EnumDef {
@@ -37,6 +45,8 @@ struct EnumDef {
     std::vector<EnumEntry> entries;
     int line = 0;
     std::string comment = "";
+
+    void accept(SchemaVisitor &visitor) const;
 };
 
 struct Schema {
@@ -44,4 +54,6 @@ struct Schema {
     std::vector<std::string> imports;
     std::vector<EnumDef> enums;
     std::vector<MessageDef> messages;
+
+    void accept(SchemaVisitor &visitor) const;
 };
