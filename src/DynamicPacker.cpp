@@ -4,6 +4,7 @@
 #include "Varint.hpp"
 #include <stdexcept>
 #include <string>
+#include <cstring>
 
 DynamicPacker::DynamicPacker(const Schema &schema) : schema(schema) {}
 DynamicReader::DynamicReader(const Schema &schema) : schema(schema) {}
@@ -63,6 +64,59 @@ void DynamicPacker::packValue(std::vector<uint8_t> &buffer,
     if (type.name == "i32" || type.name == "i64") {
         encodeTag(buffer, fieldNumber, wiretype::Varint);
         encodeVariant(buffer, encodeZigZag(value.get<int64_t>()));
+    } else if (type.name == "f32") {
+        encodeTag(buffer, fieldNumber, wiretype::Fixed32);
+        float f = value.get<float>();
+        uint8_t bytes[4];
+        std::memcpy(bytes, &f, 4);
+        buffer.insert(buffer.end(), bytes, bytes + 4);
+    } else if (type.name == "f64") {
+        encodeTag(buffer, fieldNumber, wiretype::Fixed64);
+        double d = value.get<double>();
+        uint8_t bytes[8];
+        std::memcpy(bytes, &d, 8);
+        buffer.insert(buffer.end(), bytes, bytes + 8);
+    } else if (type.name == "bytes") {
+        if (value.is_array()) {
+            std::vector<uint8_t> temp;
+            for (const auto& b : value) temp.push_back(b.get<uint8_t>());
+            encodeTag(buffer, fieldNumber, wiretype::Delimited);
+            encodeVariant(buffer, temp.size());
+            buffer.insert(buffer.end(), temp.begin(), temp.end());
+        } else if (value.is_string()) {
+            encodeString(buffer, fieldNumber, value.get<std::string>());
+        }
+    } else if (type.name == "union") {
+        int matchedIndex = -1;
+        for (size_t i = 0; i < type.subTypes.size(); i++) {
+            const auto& st = type.subTypes[i];
+            if ((st.name == "i32" || st.name == "i64" || st.name == "f32" || st.name == "f64") && value.is_number()) {
+                matchedIndex = i; break;
+            } else if ((st.name == "string" || st.name == "bytes") && value.is_string()) {
+                matchedIndex = i; break;
+            } else if (st.name == "bool" && value.is_boolean()) {
+                matchedIndex = i; break;
+            } else if (st.name == "list" && value.is_array()) {
+                matchedIndex = i; break;
+            } else if (st.name == "map" && value.is_object()) {
+                matchedIndex = i; break;
+            } else if (findMessage(st.name) && value.is_object()) {
+                matchedIndex = i; break;
+            } else if (findEnum(st.name) && (value.is_string() || value.is_number_integer())) {
+                matchedIndex = i; break;
+            }
+        }
+        if (matchedIndex != -1) {
+            std::vector<uint8_t> temp;
+            encodeTag(temp, 1, wiretype::Varint);
+            encodeVariant(temp, matchedIndex);
+            packValue(temp, 2, type.subTypes[matchedIndex], value);
+            encodeTag(buffer, fieldNumber, wiretype::Delimited);
+            encodeVariant(buffer, temp.size());
+            buffer.insert(buffer.end(), temp.begin(), temp.end());
+        } else {
+            throw std::runtime_error("No matching type in union for value");
+        }
     } else if (type.name == "string") {
         encodeString(buffer, fieldNumber, value.get<std::string>());
     } else if (type.name == "bool") {
@@ -182,6 +236,10 @@ nlohmann::json DynamicReader::unpackMessage(const std::vector<uint8_t> &buffer,
                         else if (fWt == wiretype::Delimited) {
                             uint64_t l = decodeVariant(buffer, offset);
                             offset += l;
+                        } else if (fWt == wiretype::Fixed32) {
+                            offset += 4;
+                        } else if (fWt == wiretype::Fixed64) {
+                            offset += 8;
                         }
                     }
                 }
@@ -199,6 +257,10 @@ nlohmann::json DynamicReader::unpackMessage(const std::vector<uint8_t> &buffer,
             else if (wt == wiretype::Delimited) {
                 uint64_t l = decodeVariant(buffer, offset);
                 offset += l;
+            } else if (wt == wiretype::Fixed32) {
+                offset += 4;
+            } else if (wt == wiretype::Fixed64) {
+                offset += 8;
             }
         }
     }
@@ -210,10 +272,50 @@ nlohmann::json DynamicReader::unpackValue(const std::vector<uint8_t> &buffer,
                                           wiretype wt) const {
     if (type.name == "i32" || type.name == "i64") {
         return decodeZigZag(decodeVariant(buffer, offset));
+    } else if (type.name == "f32") {
+        float f;
+        std::memcpy(&f, buffer.data() + offset, 4);
+        offset += 4;
+        return f;
+    } else if (type.name == "f64") {
+        double d;
+        std::memcpy(&d, buffer.data() + offset, 8);
+        offset += 8;
+        return d;
+    } else if (type.name == "bytes") {
+        uint64_t length = decodeVariant(buffer, offset);
+        std::vector<uint8_t> bytes(buffer.begin() + offset, buffer.begin() + offset + length);
+        offset += length;
+        return bytes;
     } else if (type.name == "string") {
         return decodeString(buffer, offset);
     } else if (type.name == "bool") {
         return decodeVariant(buffer, offset) != 0;
+    } else if (type.name == "union") {
+        uint64_t length = decodeVariant(buffer, offset);
+        size_t limit = offset + length;
+        uint32_t typeIndex = 0;
+        nlohmann::json val;
+        while (offset < limit) {
+            uint32_t fNum;
+            wiretype fWt;
+            decodeTag(buffer, offset, fNum, fWt);
+            if (fNum == 1) {
+                typeIndex = decodeVariant(buffer, offset);
+            } else if (fNum == 2) {
+                if (typeIndex < type.subTypes.size()) {
+                    val = unpackValue(buffer, offset, type.subTypes[typeIndex], fWt);
+                } else {
+                    throw std::runtime_error("Invalid type index in union");
+                }
+            } else {
+                if (fWt == wiretype::Varint) decodeVariant(buffer, offset);
+                else if (fWt == wiretype::Delimited) offset += decodeVariant(buffer, offset);
+                else if (fWt == wiretype::Fixed32) offset += 4;
+                else if (fWt == wiretype::Fixed64) offset += 8;
+            }
+        }
+        return val;
     } else {
         const MessageDef *nestedMsgDef = findMessage(type.name);
         const EnumDef *enumDef = findEnum(type.name);
