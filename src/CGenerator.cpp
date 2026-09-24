@@ -13,26 +13,26 @@ bool isEnum(const std::string& name, const Schema* schema) {
     return false;
 }
 
-std::string getCType(const DataType& type, const Schema* schema) {
-    if (type.name == "i32") return "int32_t";
-    if (type.name == "i64") return "int64_t";
-    if (type.name == "string") return "char*";
-    if (type.name == "bool") return "bool";
-    if (type.name == "list") {
-        return "jbin_list_" + getCType(type.subTypes[0], schema);
-    }
-    if (type.name == "map") {
-        return "jbin_map_" + getCType(type.subTypes[0], schema) + "_" + getCType(type.subTypes[1], schema);
-    }
-    return type.name;
-}
-
 std::string getCName(const DataType& type) {
     if (type.name == "list") return "list_" + getCName(type.subTypes[0]);
     if (type.name == "map") return "map_" + getCName(type.subTypes[0]) + "_" + getCName(type.subTypes[1]);
     if (type.name == "string") return "char_ptr";
     if (type.name == "i32") return "int32";
     if (type.name == "i64") return "int64";
+    return type.name;
+}
+
+std::string getCType(const DataType& type, const Schema* schema) {
+    if (type.name == "i32") return "int32_t";
+    if (type.name == "i64") return "int64_t";
+    if (type.name == "string") return "char*";
+    if (type.name == "bool") return "bool";
+    if (type.name == "list") {
+        return "jbin_list_" + getCName(type.subTypes[0]);
+    }
+    if (type.name == "map") {
+        return "jbin_map_" + getCName(type.subTypes[0]) + "_" + getCName(type.subTypes[1]);
+    }
     return type.name;
 }
 
