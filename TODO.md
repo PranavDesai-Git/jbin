@@ -1,13 +1,13 @@
 ### TODO
-- [ ] C struct codegen
 - [ ] C++ struct codegen
 - [ ] Python codegen
 - [ ] JS codegen
-- [ ] Runtime FFI bindings / getters
 
 ### DOING
-- [ ] Codegen abstraction (Visitor pattern for multi-lang)
+
 ### DONE
+- [x] C struct codegen
+- [x] Runtime FFI bindings / getters
 - [x] Dynamic JSON Binary Packer (serialize JSON to .jbin dynamically)
 - [x] CLI Interface (`jbin build schema.jbin --out c`)
 - [x] Dynamic JSON Binary Reader (deserialize .jbin to JSON)
@@ -21,3 +21,4 @@
     - [x] Type resolution (check if custom types exist)
     - [x] Validation: Map keys must be scalar
     - [x] Validation: No duplicate field numbers in a message
+- [x] Codegen abstraction (Visitor pattern for multi-lang)
