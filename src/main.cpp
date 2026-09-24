@@ -2,6 +2,7 @@
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "SemanticAnalyzer.hpp"
+#include "CGenerator.hpp"
 #include <cxxopts.hpp>
 #include <fstream>
 #include <iostream>
@@ -63,7 +64,12 @@ int main(int argc, char *argv[]) {
             std::cout << "Found " << schema.messages.size() << " messages and "
                       << schema.enums.size() << " enums." << std::endl;
 
-            // TODO: Pass schema to Codegen Visitor based on targetLang!
+            if (targetLang == "c") {
+                CGenerator cGen(std::cout);
+                schema.accept(cGen);
+            } else {
+                std::cerr << "Code generation for '" << targetLang << "' is not supported yet!" << std::endl;
+            }
         } else {
             std::cerr << "Unknown command: " << command << std::endl;
             return 1;
