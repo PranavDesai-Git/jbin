@@ -1,4 +1,5 @@
 #include "CGenerator.hpp"
+#include "PythonGenerator.hpp"
 #include "DynamicPacker.hpp"
 #include "Lexer.hpp"
 #include "Parser.hpp"
@@ -68,6 +69,9 @@ int main(int argc, char *argv[]) {
             if (targetLang == "c") {
                 CGenerator cGen(std::cout);
                 schema.accept(cGen);
+            } else if (targetLang == "py" || targetLang == "python") {
+                PythonGenerator pyGen(std::cout);
+                schema.accept(pyGen);
             } else {
                 std::cerr << "Code generation for '" << targetLang
                           << "' is not supported yet!" << std::endl;
