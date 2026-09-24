@@ -143,6 +143,28 @@ void CGenerator::visit(const MessageDef &message) {
     }
     out << "};\n\n";
 
+    // GENERATE GETTERS AND SETTERS (FFI Bindings)
+    for (const auto &f : message.fields) {
+        std::string ctype = getCType(f.type, currentSchema);
+        
+        // Getter
+        out << ctype << " " << message.name << "_get_" << f.name << "(const " << message.name << "* msg) {\n";
+        out << "    return msg->" << f.name << ";\n";
+        out << "}\n\n";
+
+        // Setter
+        out << "void " << message.name << "_set_" << f.name << "(" << message.name << "* msg, " << ctype << " val) {\n";
+        if (f.type.name == "string") {
+            out << "    if (msg->" << f.name << ") free(msg->" << f.name << ");\n";
+            out << "    msg->" << f.name << " = strdup(val);\n";
+        } else if (f.type.name == "list" || f.type.name == "map") {
+            out << "    msg->" << f.name << " = val;\n"; // simple struct assignment
+        } else {
+            out << "    msg->" << f.name << " = val;\n";
+        }
+        out << "}\n\n";
+    }
+
     // GENERATE PACK
     out << "size_t " << message.name << "_pack(const " << message.name << "* msg, uint8_t* buffer) {\n";
     out << "    size_t offset = 0;\n";
