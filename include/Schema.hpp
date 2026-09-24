@@ -8,6 +8,7 @@ class SchemaVisitor;
 struct DataType {
     std::string name;
     std::vector<DataType> subTypes;
+    std::string defaultValue = "";
 };
 
 struct Field {

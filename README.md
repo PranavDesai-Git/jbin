@@ -20,7 +20,7 @@ message Player:
     4. connections: list(Player)
     5. activeStatus: Activity
     6. inventory: map(string, i32)
-    7. balance: union(string, i32) = "empty"
+    7. balance: union(string="empty", i32)
 end
 ```
 

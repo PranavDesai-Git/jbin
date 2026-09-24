@@ -24,6 +24,16 @@ DataType Parser::parseDataType() {
         }
     }
 
+    if (!isAtEnd() && peek().type == TokenType::Equals) {
+        consume();
+        TokenType t = peek().type;
+        if (!isAtEnd() && (t == TokenType::Identifier || t == TokenType::Number || t == TokenType::StringLiteral)) {
+            result.defaultValue = consume().value;
+        } else {
+            throw std::runtime_error("Expected a value after = in DataType");
+        }
+    }
+
     return result;
 }
 
