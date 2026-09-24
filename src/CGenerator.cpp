@@ -16,22 +16,36 @@ bool isEnum(const std::string& name, const Schema* schema) {
 std::string getCName(const DataType& type) {
     if (type.name == "list") return "list_" + getCName(type.subTypes[0]);
     if (type.name == "map") return "map_" + getCName(type.subTypes[0]) + "_" + getCName(type.subTypes[1]);
+    if (type.name == "union") {
+        std::string n = "union";
+        for (const auto& t : type.subTypes) n += "_" + getCName(t);
+        return n;
+    }
     if (type.name == "string") return "char_ptr";
     if (type.name == "i32") return "int32";
     if (type.name == "i64") return "int64";
+    if (type.name == "f32") return "float32";
+    if (type.name == "f64") return "float64";
+    if (type.name == "bytes") return "bytes";
     return type.name;
 }
 
 std::string getCType(const DataType& type, const Schema* schema) {
     if (type.name == "i32") return "int32_t";
     if (type.name == "i64") return "int64_t";
+    if (type.name == "f32") return "float";
+    if (type.name == "f64") return "double";
     if (type.name == "string") return "char*";
     if (type.name == "bool") return "bool";
+    if (type.name == "bytes") return "jbin_bytes";
     if (type.name == "list") {
         return "jbin_list_" + getCName(type.subTypes[0]);
     }
     if (type.name == "map") {
         return "jbin_map_" + getCName(type.subTypes[0]) + "_" + getCName(type.subTypes[1]);
+    }
+    if (type.name == "union") {
+        return "jbin_" + getCName(type);
     }
     return type.name;
 }
@@ -44,6 +58,11 @@ void CGenerator::visit(const Schema &schema) {
     out << "#include <stdbool.h>\n";
     out << "#include <string.h>\n";
     out << "#include <stdlib.h>\n\n";
+
+    out << "typedef struct {\n"
+        << "    uint8_t* data;\n"
+        << "    size_t length;\n"
+        << "} jbin_bytes;\n\n";
 
     // Common C Runtime
     out << "static inline void jbin_encode_varint(uint8_t* buffer, size_t* offset, uint64_t value) {\n"
@@ -88,11 +107,11 @@ void CGenerator::visit(const Schema &schema) {
     }
     out << "\n";
 
-    // Lists and Maps structs
+    // Lists, Maps and Union structs
     std::set<std::string> generated;
     for (const auto &m : schema.messages) {
         for (const auto &f : m.fields) {
-            if (f.type.name == "list" || f.type.name == "map") {
+            if (f.type.name == "list" || f.type.name == "map" || f.type.name == "union") {
                 std::string cname = "jbin_" + getCName(f.type);
                 if (generated.find(cname) == generated.end()) {
                     generated.insert(cname);
@@ -108,6 +127,15 @@ void CGenerator::visit(const Schema &schema) {
                             << "    " << getCType(f.type.subTypes[1], currentSchema) << "* values;\n"
                             << "    size_t length;\n"
                             << "    size_t capacity;\n"
+                            << "} " << cname << ";\n\n";
+                    } else if (f.type.name == "union") {
+                        out << "typedef struct {\n"
+                            << "    uint32_t tag;\n"
+                            << "    union {\n";
+                        for (size_t i = 0; i < f.type.subTypes.size(); ++i) {
+                            out << "        " << getCType(f.type.subTypes[i], currentSchema) << " value_" << i << ";\n";
+                        }
+                        out << "    } payload;\n"
                             << "} " << cname << ";\n\n";
                     }
                 }
@@ -157,7 +185,7 @@ void CGenerator::visit(const MessageDef &message) {
         if (f.type.name == "string") {
             out << "    if (msg->" << f.name << ") free(msg->" << f.name << ");\n";
             out << "    msg->" << f.name << " = strdup(val);\n";
-        } else if (f.type.name == "list" || f.type.name == "map") {
+        } else if (f.type.name == "list" || f.type.name == "map" || f.type.name == "union") {
             out << "    msg->" << f.name << " = val;\n"; // simple struct assignment
         } else {
             out << "    msg->" << f.name << " = val;\n";
